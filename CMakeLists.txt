@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.12...3.27)
 
+include("$ENV{VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake")
+
 PROJECT(sioclient
     VERSION 3.1.0
 )

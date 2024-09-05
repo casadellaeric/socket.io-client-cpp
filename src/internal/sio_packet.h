@@ -91,7 +91,7 @@ namespace sio
         
         void encode(packet& pack,encode_callback_function const& override_encode_callback = encode_callback_function()) const;
         
-        void put_payload(string const& payload);
+        void put_payload(string const& payload, int opCode);
         
         void reset();
         

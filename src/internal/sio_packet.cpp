@@ -9,6 +9,7 @@
 #include <rapidjson/encodedstream.h>
 #include <rapidjson/writer.h>
 #include <cassert>
+#include <iostream>
 
 #define kBIN_PLACE_HOLDER "_placeholder"
 
@@ -246,7 +247,7 @@ namespace sio
     bool packet::parse_buffer(const string &buf_payload)
     {
         if (_pending_buffers > 0) {
-            assert(is_binary_message(buf_payload));//this is ensured by outside.
+            // assert(is_binary_message(buf_payload));//this is ensured by outside.
             _buffers.push_back(std::make_shared<string>(buf_payload.data(),buf_payload.size()));
             _pending_buffers--;
             if (_pending_buffers == 0) {
@@ -465,12 +466,12 @@ namespace sio
         }
     }
 
-    void packet_manager::put_payload(string const& payload)
+    void packet_manager::put_payload(string const& payload, int opCode)
     {
         unique_ptr<packet> p;
         do
         {
-            if(packet::is_text_message(payload))
+            if(opCode == 1) //packet::is_text_message(payload))
             {
                 p.reset(new packet());
                 if(p->parse(payload))
@@ -482,7 +483,7 @@ namespace sio
                     break;
                 }
             }
-            else if(packet::is_binary_message(payload))
+            else if(opCode == 2) //packet::is_binary_message(payload) || m_partial_packet && !isdigit(payload[0]))
             {
                 if(m_partial_packet)
                 {

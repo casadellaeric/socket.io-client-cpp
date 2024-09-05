@@ -493,7 +493,7 @@ namespace sio
     void client_impl::on_message(connection_hdl, client_type::message_ptr msg)
     {
         // Parse the incoming message according to socket.IO rules
-        m_packet_mgr.put_payload(msg->get_payload());
+        m_packet_mgr.put_payload(msg->get_payload(), msg->get_opcode());
     }
     
     void client_impl::on_handshake(message::ptr const& message)
