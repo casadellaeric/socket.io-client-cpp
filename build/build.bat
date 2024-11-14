@@ -1,0 +1,2 @@
+cmake -DVCPKG_TARGET_TRIPLET=arm64-android -DCMAKE_TOOLCHAIN_FILE="%VCPKG_ROOT%/scripts/buildsystems/vcpkg.cmake" -DCMAKE_TOOLCHAIN_FILE_SECONDARY="%ANDROID_NDK_PATH%/build/cmake/android.toolchain.cmake" -DANDROID_NDK="%ANDROID_NDK_PATH%" -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-31 -G Ninja ..
+ninja

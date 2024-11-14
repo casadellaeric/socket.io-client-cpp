@@ -1,10 +1,20 @@
 cmake_minimum_required(VERSION 3.12...3.27)
 
-include("$ENV{VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake")
+include("$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+# set(vcpkg "$ENV{VCPKG_ROOT}\\scripts\\buildsystems\\vcpkg.cmake")
+# message("vcpkg path: ${vcpkg}")
+# set(CMAKE_TOOLCHAIN_FILE "${vcpkg}")
+# if(NOT CMAKE_TOOLCHAIN_FILE AND EXISTS "${vcpkg}")
+#   set(CMAKE_TOOLCHAIN_FILE "${vcpkg}"
+#       CACHE FILEPATH "CMake toolchain file")
+#   message(STATUS "vcpkg toolchain found: ${CMAKE_TOOLCHAIN_FILE}")
+# endif()
 
 PROJECT(sioclient
     VERSION 3.1.0
 )
+
+add_compile_definitions("ANDROID_LIB")
 
 option(BUILD_SHARED_LIBS "Build the shared library" OFF)
 option(BUILD_UNIT_TESTS "Builds unit tests target" OFF)
@@ -64,7 +74,7 @@ else()
     find_package(websocketpp CONFIG REQUIRED)
     find_package(asio CONFIG REQUIRED)
     find_package(RapidJSON CONFIG REQUIRED)
-    target_link_libraries(sioclient PRIVATE websocketpp::websocketpp asio::asio rapidjson)
+    target_link_libraries(sioclient PRIVATE websocketpp::websocketpp asio::asio rapidjson log)
 endif()
 
 include(GNUInstallDirs)
@@ -105,9 +115,9 @@ if(OPENSSL_FOUND)
     )
 
     target_compile_features(sioclient_tls PUBLIC cxx_std_11)
-    target_link_libraries(sioclient_tls PRIVATE OpenSSL::SSL OpenSSL::Crypto)
+    target_link_libraries(sioclient_tls PRIVATE OpenSSL::SSL OpenSSL::Crypto log)
     if (NOT USE_SUBMODULES)
-        target_link_libraries(sioclient_tls PRIVATE websocketpp::websocketpp asio asio::asio rapidjson)
+        target_link_libraries(sioclient_tls PRIVATE websocketpp::websocketpp asio asio::asio rapidjson log)
     endif()
 
     target_compile_definitions(sioclient_tls PRIVATE -DSIO_TLS)

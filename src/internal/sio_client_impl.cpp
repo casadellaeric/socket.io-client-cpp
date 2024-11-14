@@ -8,16 +8,29 @@
 
 #include "sio_client_impl.h"
 #include <functional>
-#include <sstream>
+#include <ostream>
 #include <chrono>
 #include <mutex>
 #include <cmath>
+
+#ifdef ANDROID_LIB
+#include <android/log.h>
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO, "DidymosPlugin(C++)/Source", __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "DidymosPlugin(C++)/Source", __VA_ARGS__))
+#else
+#define LOGI(...)
+#define LOGW(...)
+#endif
+
 // Comment this out to disable handshake logging to stdout
 #if (DEBUG || _DEBUG) && !defined(SIO_DISABLE_LOGGING)
-#define LOG(x) std::cout << x
+//#define LOG(x) std::cout << x
+#define LOG(x) LOGI(x)
 #else
-#define LOG(x)
+#define LOG(...) ((void)__android_log_print(ANDROID_LOG_INFO, "DidymosPlugin(C++)/Source", __VA_ARGS__))
 #endif
+
+
 
 #if SIO_TLS
 // If using Asio's SSL support, you will also need to add this #include.
@@ -304,7 +317,8 @@ namespace sio
 
     void client_impl::close_impl(close::status::value const& code,string const& reason)
     {
-        LOG("Close by reason:"<<reason << endl);
+        //LOG("Close by reason:"<<reason << endl);
+        LOG("Close by reason: %s", reason.c_str());
         if(m_reconn_timer)
         {
             m_reconn_timer->cancel();
@@ -340,7 +354,7 @@ namespace sio
         {
             return;
         }
-        LOG("Ping timeout"<<endl);
+        LOG("Ping timeout");
         m_client.get_io_service().dispatch(std::bind(&client_impl::close_impl, this,close::status::policy_violation,"Ping timeout"));
     }
 
@@ -355,7 +369,7 @@ namespace sio
             m_con_state = con_opening;
             m_reconn_made++;
             this->reset_states();
-            LOG("Reconnecting..."<<endl);
+            LOG("Reconnecting...");
             if(m_reconnecting_listener) m_reconnecting_listener();
             m_client.get_io_service().dispatch(std::bind(&client_impl::connect_impl,this,m_base_url,m_query_string));
         }
@@ -397,7 +411,7 @@ namespace sio
     void client_impl::on_fail(connection_hdl)
     {
         if (m_con_state == con_closing) {
-            LOG("Connection failed while closing." << endl);
+            LOG("Connection failed while closing.");
             this->close();
             return;
         }
@@ -405,10 +419,10 @@ namespace sio
         m_con.reset();
         m_con_state = con_closed;
         this->sockets_invoke_void(&sio::socket::on_disconnect);
-        LOG("Connection failed." << endl);
+        LOG("Connection failed.");
         if(m_reconn_made<m_reconn_attempts && !m_abort_retries)
         {
-            LOG("Reconnect for attempt:"<<m_reconn_made<<endl);
+            LOG("Reconnect for attempt: %i", m_reconn_made);
             unsigned delay = this->next_delay();
             if(m_reconnect_listener) m_reconnect_listener(m_reconn_made,delay);
             m_reconn_timer.reset(new asio::steady_timer(m_client.get_io_service()));
@@ -425,12 +439,12 @@ namespace sio
     void client_impl::on_open(connection_hdl con)
     {
         if (m_con_state == con_closing) {
-            LOG("Connection opened while closing." << endl);
+            LOG("Connection opened while closing.");
             this->close();
             return;
         }
 
-        LOG("Connected." << endl);
+        LOG("Connected.");
         m_con_state = con_opened;
         m_con = con;
         m_reconn_made = 0;
@@ -441,14 +455,14 @@ namespace sio
     
     void client_impl::on_close(connection_hdl con)
     {
-        LOG("Client Disconnected." << endl);
+        LOG("Client Disconnected.");
         con_state m_con_state_was = m_con_state;
         m_con_state = con_closed;
         lib::error_code ec;
         close::status::value code = close::status::normal;
         client_type::connection_ptr conn_ptr  = m_client.get_con_from_hdl(con, ec);
         if (ec) {
-            LOG("OnClose get conn failed"<<ec<<endl);
+            LOG("OnClose get conn failed. %s", ec.message().c_str());
         }
         else
         {
@@ -472,7 +486,7 @@ namespace sio
             this->sockets_invoke_void(&sio::socket::on_disconnect);
             if(m_reconn_made<m_reconn_attempts && !m_abort_retries)
             {
-                LOG("Reconnect for attempt:"<<m_reconn_made<<endl);
+                LOG("Reconnect for attempt: %i", m_reconn_made);
                 unsigned delay = this->next_delay();
                 if(m_reconnect_listener) m_reconnect_listener(m_reconn_made,delay);
                 m_reconn_timer.reset(new asio::steady_timer(m_client.get_io_service()));
@@ -592,13 +606,13 @@ failed:
     
     void client_impl::on_encode(bool isBinary,shared_ptr<const string> const& payload)
     {
-        LOG("encoded payload length:"<<payload->length()<<endl);
+        LOG("encoded payload length: %iu", payload->length());
         m_client.get_io_service().dispatch(std::bind(&client_impl::send_impl,this,payload,isBinary?frame::opcode::binary:frame::opcode::text));
     }
     
     void client_impl::clear_timers()
     {
-        LOG("clear timers"<<endl);
+        LOG("clear timers");
         asio::error_code ec;
         if(m_ping_timeout_timer)
         {
